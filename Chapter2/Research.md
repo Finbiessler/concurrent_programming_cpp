@@ -7,6 +7,7 @@
 - An thread exits when the function associated with it finishes. For example when      ```main()``` finishes the initial thread exits
 
 ### 1.1.1 Launching a thread
+
 Starting a thread always boils down to constructing a ```std::thread``` object for example like this:
 
 ````cpp
