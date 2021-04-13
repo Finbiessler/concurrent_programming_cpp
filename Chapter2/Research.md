@@ -33,3 +33,5 @@ class background_task
 background_task f;
 std::thread my_thread(f);
 ````
+
+The function object is copied to the storage belonging to the thread where it is executed and invoked from there. Therefore it is essential that the copy behaves exactly like the original otherwise results might be unexpected.
