@@ -15,7 +15,9 @@ void do_some_work();
 std::thread my_thread(do_some_work);
 ````
 
-Remark: Make sure that you include the ```<thread>``` header so the complier notices the definition of the ```std::thread``` class. In the following code snippets this will be omitted.
+#### Remark
+
+Make sure that you include the ```<thread>``` header so the complier notices the definition of the ```std::thread``` class. **In the following code snippets includes will be omitted.**
 
 As with much of the C++ Standard Library, ```std::thread``` works with any callable type for example:
 
@@ -35,3 +37,25 @@ std::thread my_thread(f);
 ````
 
 The function object is copied to the storage belonging to the thread where it is executed and invoked from there. Therefore it is essential that the copy behaves exactly like the original otherwise results might be unexpected.
+
+#### Remark
+
+When passing a temporary rather than a named variable the syntax can be the same as a function declaration and the compiler will interpret it as such:
+
+````cpp
+std::thread my_thread(background_task()); // will be interpreted as a decl.
+````
+
+One avoids that by using one of the following syntaxes 
+
+````cpp
+
+std::thread my_thread((background_task())); // extra pair of parentheses 
+std::thread my_thread{background_task()}; // uniform initialization syntax
+````
+
+Another way achieving the correct interpretation would be to use lambda expressions (local/anonymous function) in the following way 
+
+````cpp
+
+````
