@@ -3,7 +3,7 @@
 ## 1.1 Basic thread management
 
 - Each C++ program has at least one thread started by the C++ runtime, it is the thread running ```main()```
-- Your program can launch additional threads running that has another function as an entry point. These thread run concurrently with each other and the main (initial) thread
+- Your program can launch additional threads that has another function as an entry point. These thread run concurrently to each other and the main (initial) thread
 - An thread exits when the function associated with it finishes. For example when      ```main()``` finishes the initial thread exits
 
 ### 1.1.1 Launching a thread
