@@ -431,4 +431,5 @@ This enables subdividing the work of an algorithm to multiple threads. Neverthel
 This is also a step toward automating the management of those threads rather than creating separate variables for those threads and joining with them directly. It is possible to treat them as a group.
 
 ## 4. Choosing the number of threads at runtime
-Continue here:
+
+Continue writing here:
