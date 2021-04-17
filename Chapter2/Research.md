@@ -64,7 +64,7 @@ Another way achieving the correct interpretation would be to use lambda expressi
 
 ### 1.2 Issues arising from using threads
 
-When a thread is started one needs to explicitly state whether to wait for it to finish (by joining it **TODO: REFERENCE**) or leave it to run on it's own (by detaching it **TODO: Reference** ). When one does not decide before the ```std::thread``` object is destroyed the program is terminated by calling ```std::terminate```. Note that you only have to decide before the ```std::thread``` object is destroyed. When not waiting for the thread to finish one has to insure that the data the thread is working on is still available. 
+When a thread is started one needs to explicitly state whether to wait for it to finish (by joining it - see section 1.3) or leave it to run on it's own (by detaching it **TODO: Reference** ). When one does not decide before the ```std::thread``` object is destroyed the program is terminated by calling ```std::terminate```. Note that you only have to decide before the ```std::thread``` object is destroyed. When not waiting for the thread to finish one has to insure that the data the thread is working on is still available. 
 
 Here is one example of a program where the thread function holds a local variable that is destroyed before the thread finishes: 
 
@@ -94,4 +94,7 @@ Here the new thread associated with ```my_thread``` will most likely still be ru
 In the following the two main ways to avoid this are presented:
 
 1. Make the thread self-contained and copy the data into the thread rather than sharing it
-2.  
+2. By *joining* with the thread
+
+### 1.3 Joining with threads
+
