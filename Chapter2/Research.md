@@ -64,7 +64,7 @@ Another way achieving the correct interpretation would be to use lambda expressi
 
 ### 1.2 Issues arising from using threads
 
-When a thread is started one needs to explicitly state whether to wait for it to finish (by joining it - see section 1.3) or leave it to run on it's own (by detaching it **TODO: Reference** ). When one does not decide before the ```std::thread``` object is destroyed the program is terminated by calling ```std::terminate```. Note that you only have to decide before the ```std::thread``` object is destroyed. When not waiting for the thread to finish one has to insure that the data the thread is working on is still available.
+When a thread is started one needs to explicitly state whether to wait for it to finish (by joining it - see section 1.3) or leave it to run on it's own (by detaching it - see section 1.4). When one does not decide before the ```std::thread``` object is destroyed the program is terminated by calling ```std::terminate```. Note that you only have to decide before the ```std::thread``` object is destroyed. When not waiting for the thread to finish one has to insure that the data the thread is working on is still available.
 
 Here is one example of a program where the thread function holds a local variable that is destroyed before the thread finishes:
 
@@ -140,15 +140,15 @@ A rewritten version using RAII of the listing above is given in the following:
 class thread_guard
 {
     std::thread& t;
-    public:
-        explicit thread_guard(std::thread& t_): t(t_){}
-        ~thread_guard()
+public:
+    explicit thread_guard(std::thread& t_): t(t_){}
+    ~thread_guard()
+    {
+        if(t.joinable())
         {
-            if(t.joinable())
-            {
-                t.join(); 
-            }
+            t.join(); 
         }
+    }
     thread_guard(thread_guard const&)=delete;
     thread_guard& operator=(thread_guard const&)=delete;
 };
@@ -229,8 +229,8 @@ Syntactical structures for calling member functions in a new thread are provided
 ````cpp
     class X
     {
-        public:
-            void do_lengthy_work();
+    public:
+        void do_lengthy_work();
     };
     X my_x;
     std::thread t(&X::do_lengthy_work, &my_x);
@@ -256,3 +256,176 @@ The ```std::thread```class has the same ownership behaviors as ```std::unique_pt
 This structure allows for only one object being associated with the thread of executing while still providing a mechanism for transferring this ownership as developer.
 
 ## 3 Transferring ownership of a thread
+
+**Motivation:**
+
+- wanting to write a function that creates a thread to run in the background, but passes ownership of the new thread to the calling function
+- wanting to create a thread and pass the ownership in to some function
+- Ownership: When a function 'owns' a thread it means that this function only exits/ returns when the thread is complete
+
+**Example:**
+
+````cpp
+    void some_function();
+    void some_other_function();
+    std::thread t1(some_function);
+    std::thread t2=std::move(t1);
+    t1=std::thread(some_other_function);
+    std::thread t3;
+    t3=std::move(t2);
+    t1=std::move(t3); // <- Terminates since t1 already has a thread associated with it
+````
+
+With this knowledge it is possible to transfer ownership of threads in and out from functions in the following ways:
+
+Transfer out:
+
+````cpp
+    std::thread f()
+    {
+        void some_function();
+        return std::thread(some_function);
+    }
+    std::thread g()
+    {
+        void some_other_function(int);
+        std::thread t(some_other_function,42);
+        return t;
+    } 
+````
+
+Transfer in:
+
+````cpp
+    void f(std::thread t);
+    void g()
+    {
+        void some_function();
+        f(std::thread(some_function));
+        std::thread t(some_function);
+        f(std::move(t));
+    }
+````
+
+With this one can build on the ```thread_guard``` class from before and have it take care of the ownership of the thread. The benefits are the following:
+
+- Avoids unpleasant consequences when the object outlive the thread it was referencing
+- Provides safety that no one else can join or detach the thread once the ownership belongs to the object. In the following code snippet the class ```scoped_thread``` that implements this behavior along with a simple usage example is presented:
+
+````cpp
+    class scoped_thread
+    {
+        std::thread t;
+    public:
+        explicit scoped_thread(std::thread t_): t(std::move(t_))
+        {
+            if(!t.joinable())
+                throw std::logic_error(“No thread”);
+        }
+        ~scoped_thread()
+        {
+            t.join(); 
+        }
+        scoped_thread(scoped_thread const&)=delete;
+        scoped_thread& operator=(scoped_thread const&)=delete;
+    };
+
+    // Usage
+    struct func; See listing 2.1 void f()
+    {
+        int some_local_state;
+        scoped_thread t{std::thread(func(some_local_state))};
+        do_something_in_current_thread();
+    }
+````
+
+### 3.1 A ```joining_thread``` class
+
+One of the proposals for the C++17 standard was the ```joining_thread``` class, that would implement a extensive, robust and safe thread wrapper much like ```scoped_thread```, but it didn't make it to consensus. With the knowledge obtained so far one can relatively easy implement such a class, hence it is presented in the following:
+
+````cpp
+    class joining_thread
+    {
+        std::thread t;
+    public:
+        joining_thread() noexcept=default;
+        template<typename Callable,typename ... Args>
+        explicit joining_thread(Callable&& func,Args&& ... args):
+            t(std::forward<Callable>(func),std::forward<Args>(args)...)
+        {}
+        explicit joining_thread(std::thread t_) noexcept:
+            t(std::move(t_))
+        {}
+        joining_thread(joining_thread&& other) noexcept:
+            t(std::move(other.t))
+        {}
+        joining_thread& operator=(joining_thread&& other) noexcept
+        {
+            if(joinable())
+                join();
+            t=std::move(other.t);
+            return *this;
+        }
+        joining_thread& operator=(std::thread other) noexcept
+        {
+            if(joinable())
+                join();
+            t=std::move(other);
+            return *this;
+        }
+        ~joining_thread() noexcept
+        {
+            if(joinable())
+                join();
+        }
+        void swap(joining_thread& other) noexcept
+        {
+            t.swap(other.t);
+        }
+        std::thread::id get_id() const noexcept{
+            return t.get_id();
+        }
+        bool joinable() const noexcept
+        {
+            return t.joinable();
+        }
+        void join() 
+        {
+            t.join(); 
+        }
+        void detach()
+        {
+            t.detach();
+        }
+        std::thread& as_thread() noexcept
+        {
+            return t; 
+        }
+        const std::thread& as_thread() const noexcept
+        {
+        return t; 
+        }
+    };
+````
+
+The move support in ```std::thread``` allows for containers of ```std::thread```objects if those containers are move-aware (like the updated ```std::vector<>```). This makes code like the following possible:
+
+````cpp
+    void do_work(unsigned id);
+    void f()
+    {
+            std::vector<std::thread> threads;
+            for(unsigned i=0;i<20;++i)
+            {
+                threads.emplace_back(do_work,i);
+            }
+            for(auto& entry: threads)
+                entry.join();
+    }
+`````
+
+This enables subdividing the work of an algorithm to multiple threads. Nevertheless the structure of the snippet above implies that:
+    - the work done by the individual threads is self-contained
+    - the result of their operations is purely the side effects on shared data
+
+This is also a step toward automating the management of those threads rather than creating separate variables for those threads and joining with them directly. It is possible to treat them as a group.
