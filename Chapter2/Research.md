@@ -184,3 +184,75 @@ throws an exception
 - When a thread is detached it is no longer joinable
 
 ## 2 Passing arguments to a thread function
+
+- As simple as passing additional arguments to the ```std::thread```constructor
+- By default the arguments are copied into internal storage as rvalues
+- This is even done when expecting a reference
+
+````cpp
+    void f(int i,std::string const& s);
+    std::thread t(f,3,”hello”);
+````
+
+Note that ```hello``` is passed in as ```const char*``` and implicitly converted to ```std::string````
+
+This is particularly important when the argument supplied is a pointer to an automatic variable:
+
+````cpp
+    void f(int i,std::string const& s);
+    void oops(int some_param)
+    {
+        char buffer[1024];
+        sprintf(buffer, "%i",some_param);
+            std::thread t(f,3,buffer);
+        t.detach();
+    }
+````
+
+The problem here is that there is a significant chance that the function ```oops``` exits before the variable ```buffer```has been converted to a ```std::string``` leading to undefined behavior. The solution is a type cast as follows:
+
+````cpp
+    void f(int i,std::string const& s);
+    void oops(int some_param)
+    {
+        char buffer[1024];
+        sprintf(buffer, "%i",some_param);
+            std::thread t(f,3,std::string(buffer));
+        t.detach();
+    }
+````
+
+The reverse scenario: an object is copied and you wanted a non-const reference won't compile. When you still want to do such things you need to wrap the parameter in ```std::ref```.
+
+Syntactical structures for calling member functions in a new thread are provided as follows:
+
+````cpp
+    class X
+    {
+        public:
+            void do_lengthy_work();
+    };
+    X my_x;
+    std::thread t(&X::do_lengthy_work, &my_x);
+````
+
+When you want to pass an argument to the method, you have to pass it as the third argument of the thread constructor. So on and so forth for additional arguments.
+
+### 2.1 Passing arguments where the arguments can only be *moved*
+
+- An example of that would be the passing of a ```std::unique_ptr````
+
+````cpp
+    void process_big_object(std::unique_ptr<big_object>);
+    std::unique_ptr<big_object> p(new big_object);
+    p->prepare_data(42);
+    std::thread t(process_big_object,std::move(p));
+````
+
+Note that when the object is temporary this move is automatic for named values like ```p``` the move has to be made explicit as shown above
+
+The ```std::thread```class has the same ownership behaviors as ```std::unique_ptr``` so transferring the ownership of an ```std::thread``` object is also achieved by *moving* it.
+
+This structure allows for only one object being associated with the thread of executing while still providing a mechanism for transferring this ownership as developer.
+
+## 3 Transferring ownership of a thread
