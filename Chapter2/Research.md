@@ -422,10 +422,13 @@ The move support in ```std::thread``` allows for containers of ```std::thread```
             for(auto& entry: threads)
                 entry.join();
     }
-`````
+````
 
 This enables subdividing the work of an algorithm to multiple threads. Nevertheless the structure of the snippet above implies that:
     - the work done by the individual threads is self-contained
     - the result of their operations is purely the side effects on shared data
 
 This is also a step toward automating the management of those threads rather than creating separate variables for those threads and joining with them directly. It is possible to treat them as a group.
+
+## 4. Choosing the number of threads at runtime
+Continue here:
