@@ -98,3 +98,8 @@ In the following the two main ways to avoid this are presented:
 
 ### 1.3 Joining with threads
 
+If one needs to wait for a thread to complete, this is done by calling ```join()``` on the associated ```std::thread``` object. When looking into the code example from before it is sufficient to replace the call of  ```my_thread.detach()``` with ```my_thread.join()``` to insure that the thread was finished before ```oops()``` was exited and the local variables were destroyed.
+
+When you need a more fine grained control over waiting for a thread one can use mechanisms such as condition variables and futures but these will be elaborated in another presentation. 
+
+The act of *joining* a ```thread``` cleans up any storage associated to the thread, so the joined thread object is no longer associated with any other running thread. 
