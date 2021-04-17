@@ -173,3 +173,14 @@ throws an exception
 - *Detaching* the thread would not raise these issues and would thus not require such an exception safe handling of the thread
 
 ### 1.4 Detaching threads
+
+- *Detaching* a thread by calling ```detach()``` on the associated ```std::thread``` object on it leaves the thread to run in the background
+- For *detached* threads there are no means of direct communication with it anymore
+  - not possible to join with anymore
+  - not possible to obtain a ```std::thread``` object that references to it
+  - truly run in the background
+  - ownership and control are passed to the C++ Runtime Library
+- These threads are often called *daemon threads* that run in the background with no user interface
+- When a thread is detached it is no longer joinable
+
+## 2 Passing arguments to a thread function
