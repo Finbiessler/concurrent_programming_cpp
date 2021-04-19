@@ -422,10 +422,30 @@ The move support in ```std::thread``` allows for containers of ```std::thread```
             for(auto& entry: threads)
                 entry.join();
     }
-`````
+````
 
 This enables subdividing the work of an algorithm to multiple threads. Nevertheless the structure of the snippet above implies that:
     - the work done by the individual threads is self-contained
     - the result of their operations is purely the side effects on shared data
 
 This is also a step toward automating the management of those threads rather than creating separate variables for those threads and joining with them directly. It is possible to treat them as a group.
+
+## 4. Choosing the number of threads at runtime
+
+- The C++ Standard Library provides a function that helps here namely ```std::thread::hardware_concurrency```
+  - It returns the number thread that can truly run concurrently on a system
+        - for a multi-core system that might be the number of CPUs
+    - Note that this is only a hint and the function can return 0 although there might be more threads available, this can be due to lack of information
+- This information than can be used to identify the number of threads to use at runtime, liken this you can avoid oversubscription and undersubscription (using not enough or to many threads for a given task)
+
+## 5. Identifying threads
+
+- When developing concurrent programs one might come across a point where he wants to identify a thread
+- Threads have an id of the type ```std::thread::id```that can be retrieved in two ways
+  - calling ```get_id()```on a thread object, "not any thread" when no thread of execution is associated
+    - the current thread id can be obtained by calling ```std::thread::get_id()````
+- these id's can be copied and compared
+  - provide a total ordering
+- they are used for:
+  - checking whether a thread should perform a certain action
+    - storing data to be shared among threads without losing the associativity between thread and data
