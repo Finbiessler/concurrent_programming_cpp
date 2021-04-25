@@ -4,8 +4,6 @@
 #include <thread> 
 #include <math.h>
 
-void write_to_file(std::string, std::string);
-
 void write_to_file(
     std::string input_file_path,
     std::string ouput_file_path
@@ -38,7 +36,7 @@ int main(){
 
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    std::cout << duration.count()/pow(10, 6) << std::endl;
+    std::cout << duration.count()/pow(10, 6) << "s" << std::endl;
 
     return 0;
 }
