@@ -3,7 +3,7 @@
 #include <string>
 #include <math.h>
 
-bool write_to_file(
+void write_to_file(
     std::string input_file_path,
     std::string ouput_file_path
 ){
@@ -22,22 +22,18 @@ bool write_to_file(
 
         input.close();
         output.close();
-        return true;
     }
-
-    return false;
 }
 
 int main(){
     auto start = std::chrono::high_resolution_clock::now();
-    if(write_to_file("input/input1.txt", "output/output_sequential.txt")) {
-        if(write_to_file("input/input2.txt", "output/output_sequential.txt")){
-            auto stop = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            std::cout << duration.count()/pow(10, 6) << "s" << std::endl;
-            return 0;
-        }
-    }
 
-    return 1;
+    write_to_file("input/input1.txt", "output/output_sequential.txt");
+    write_to_file("input/input2.txt", "output/output_sequential.txt");
+
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    std::cout << duration.count()/pow(10, 6) << "s" << std::endl;
+    
+    return 0;
 }
