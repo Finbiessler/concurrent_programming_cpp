@@ -18,25 +18,6 @@ public:
     thread_guard& operator=(thread_guard const&)=delete;
 };
 
-class scoped_thread
-{
-    std::thread t;
-public:
-    explicit scoped_thread(std::thread t_): t(std::move(t_))
-    {
-        if(!t.joinable()) {
-            std::string msg = "No thread";
-            throw std::logic_error(msg);
-        }
-    }
-    ~scoped_thread()
-    {
-        t.join(); 
-    }
-    scoped_thread(scoped_thread const&)=delete;
-    scoped_thread& operator=(scoped_thread const&)=delete;
-};
-
 void do_something(int i) {
     std::cout << i << std::endl;
 }
@@ -58,6 +39,5 @@ int main() {
     func my_func(some_local_state);
     std::thread t1(my_func);
     thread_guard g1(t1);
-    //scoped_thread s1{std::thread(func(some_local_state))};
     return 0;
 }

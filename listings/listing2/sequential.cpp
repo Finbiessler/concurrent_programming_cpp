@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <thread> 
 #include <math.h>
 
 void write_to_file(

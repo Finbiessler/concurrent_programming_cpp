@@ -16,7 +16,6 @@ void write_to_file(
 
     if(input.is_open()){
         std::string line = "";
-
         while(getline(input, line)){
             output << line << std::endl; 
         }
